@@ -63,7 +63,7 @@ namespace EdcWinForms
             btnStart.Size = new Size(135, 23);
             btnStart.TabIndex = 1;
             btnStart.Text = "Start Listening";
-            btnStart.Click += BtnStart_Click;
+            btnStart.Click += BtnStartListen_Click;
             // 
             // btnSendRequest
             // 
@@ -134,6 +134,7 @@ namespace EdcWinForms
             hostIdBox.TabIndex = 9;
             hostIdBox.Tag = "";
             hostIdBox.Text = "Host ID";
+            hostIdBox.SelectedIndexChanged += HostIdBox_SelectedIndexChanged;
             // 
             // commPortBox
             // 
@@ -145,6 +146,7 @@ namespace EdcWinForms
             commPortBox.TabIndex = 10;
             commPortBox.Tag = "";
             commPortBox.Text = "Comm Port Name";
+            commPortBox.SelectedIndexChanged += CommPortBox_SelectedIndexChanged;
             // 
             // overtimeTxt
             // 
@@ -452,6 +454,7 @@ namespace EdcWinForms
             consoleClear.TabStop = true;
             consoleClear.Text = "clear";
             consoleClear.UseVisualStyleBackColor = true;
+            consoleClear.CheckedChanged += ConsoleClear_CheckedChanged;
             // 
             // MainForm
             // 

@@ -6,6 +6,9 @@ using System.Threading.Channels;
 using EdcWinForms.Services;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System;
+using System.IO.Ports;
+using System.Windows.Forms;
 
 namespace EdcWinForms
 {
@@ -16,11 +19,14 @@ namespace EdcWinForms
         private const string QueueName = "payment";
         private string transType;
         private string machineModel;
+        private string hostId;
+        private string commPort;
 
         public MainForm()
         {
             InitializeComponent();
             InitializeRabbitMQ();
+            LoadAvailablePorts();
         }
 
         private async void InitializeRabbitMQ()
@@ -30,6 +36,14 @@ namespace EdcWinForms
             _channel = await _connection.CreateChannelAsync();
 
             await _channel.QueueDeclareAsync(queue: QueueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
+        }
+
+        private void LoadAvailablePorts()
+        {
+            string[] ports = SerialPort.GetPortNames();
+
+            commPortBox.Items.Clear();
+            commPortBox.Items.AddRange(ports);
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -46,7 +60,7 @@ namespace EdcWinForms
                 await _connection.CloseAsync();
         }
 
-        private async void BtnStart_Click(object sender, EventArgs e)
+        private async void BtnStartListen_Click(object sender, EventArgs e)
         {
             if (_channel == null)
             {
@@ -81,6 +95,22 @@ namespace EdcWinForms
                 MessageBox.Show("Please enter a message!", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+            message += $@"
+ReceiptNumber={recepitNoTxt.Text}
+TransactionAmount={transAmountTxt.Text}
+TransactionDate={transDateTxt.Text}
+StoreID={storeIdTxt.Text}
+BatchNo={batchNoTxt.Text}
+TraceNo={traceNoTxt.Text}
+WalletType={walletTypeTxt.Text}
+WalletCode={walletCodeTxt.Text}
+POSID={posIdTxt.Text}
+RefNo={refNoTxt.Text}
+ApprovalCode={apprCodeTxt.Text}
+OrderID={orderIdTxt.Text}
+CardInputType={cardInputTypeTxt.Text}
+TradeNo={tradeNoTxt.Text}
+InstallmentPeriod={installmentPeriodTxt.Text}";
 
             var body = Encoding.UTF8.GetBytes(message);
 
@@ -112,6 +142,8 @@ namespace EdcWinForms
             reqTxt.Text += model + "=" + message + Environment.NewLine;
         }
 
+
+        #region attribute
         private void MachineModelBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             string? selectedMachineModel = machineModelBox.SelectedItem?.ToString();
@@ -147,5 +179,39 @@ namespace EdcWinForms
             transType = transactionType;
             UpdateRequest("TransactionType", selectedTransType);
         }
+
+        private void HostIdBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string? selectedHostId = hostIdBox.SelectedItem?.ToString() ?? "Test";
+            string hostIdItem = selectedHostId switch
+            {
+                "Auto Select" => SDK_POS_ezAIO.ezpay.edc.Constants.hostID_AutoSelect,
+                "Credit Card" => SDK_POS_ezAIO.ezpay.edc.Constants.hostID_CreditCard,
+                "Easy Card" => SDK_POS_ezAIO.ezpay.edc.Constants.hostID_EasyCard,
+                "Installment" => SDK_POS_ezAIO.ezpay.edc.Constants.hostID_Installment,
+                "IPass Card" => SDK_POS_ezAIO.ezpay.edc.Constants.hostID_IPassCard,
+                "Redemption" => SDK_POS_ezAIO.ezpay.edc.Constants.hostID_Redemption,
+                "UPOP" => SDK_POS_ezAIO.ezpay.edc.Constants.hostID_UPOP,
+                "Wallet" => SDK_POS_ezAIO.ezpay.edc.Constants.hostID_Wallet,
+                _ => "Test",
+            };
+            hostId = hostIdItem;
+            UpdateRequest("HostId", selectedHostId);
+        }
+
+        private void CommPortBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string? selectedCommPort = commPortBox.SelectedItem?.ToString() ?? "COM4";
+            UpdateRequest("COMM", selectedCommPort);
+            commPort = selectedCommPort;
+        }
+
+        private void ConsoleClear_CheckedChanged(object sender, EventArgs e)
+        {
+            consoleClear.Checked = false;
+            consoleTrue.Checked = false;
+            consoleFalse.Checked = false;
+        }
+        #endregion
     }
 }
